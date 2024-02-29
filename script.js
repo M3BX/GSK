@@ -34,11 +34,17 @@ $(document).ready(function () {
                 rsum = raz * e.id
                 summ += rsum - e.sum
 
+                console.log(e.date)
+                console.log(rsum)
+                console.log(summ)
+
+
+
                 cartItemsList.insertAdjacentHTML('beforeend', "<tr><td>" + e.date + "</ ><td>" + e.ind + "</td><td>" + raz + "</td><td>" + e.sum + "</td></tr > ");
             });
 
             const qw = document.getElementById("qw")
-            qw.insertAdjacentHTML('beforeend', summ)
+            qw.insertAdjacentHTML('beforeend', summ.toFixed(2))
 
         }
     })
