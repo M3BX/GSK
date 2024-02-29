@@ -4,7 +4,7 @@ const urlParams = new URLSearchParams(queryString);
 const bo = urlParams.get('bo')
 console.log(bo);
 /* I put your JSON into an external file, loaded from github */
-const url = "../box/" + bo + ".json";
+const url = "../GSK/box/" + bo + ".json";
 
 const nameBox = document.getElementById("box");
 nameBox.insertAdjacentHTML('beforeend', bo)
