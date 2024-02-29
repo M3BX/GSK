@@ -3,8 +3,9 @@ const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const bo = urlParams.get('bo')
 console.log(bo);
-/* I put your JSON into an external file, loaded from github */
+
 const url = "../GSK/box/" + bo + ".json";
+// const url = "/box/" + bo + ".json";
 
 const nameBox = document.getElementById("box");
 nameBox.insertAdjacentHTML('beforeend', bo)
@@ -19,17 +20,29 @@ $(document).ready(function () {
         },
         success: function (results) {
 
-
             var cartItemsList = document.getElementById("contbox");
             let raz = 0
             let pre = 0
+            let rsum = 0
+            let summ = 0
+
             results.box.forEach(function (e) {
                 raz = e.ind - pre
                 pre = e.ind
+                rsum = raz * 7.5
+                summ += rsum - e.sum
+
+                console.log(rsum)
+                console.log(summ)
 
 
-                cartItemsList.insertAdjacentHTML('beforeend', "<tr><td>" + e.date + "</td><td>" + e.ind + " (+" + raz + ") " + "</td><td>" + e.sum + "</td></tr>");
+
+                cartItemsList.insertAdjacentHTML('beforeend', "<tr><td>" + e.date + "</ ><td>" + e.ind + "</td><td>" + raz + "</td><td>" + e.sum + "</td></tr > ");
             });
+
+            const qw = document.getElementById("qw")
+            qw.insertAdjacentHTML('beforeend', summ)
+
         }
     })
 })
