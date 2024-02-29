@@ -1,13 +1,13 @@
 
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
-const box = urlParams.get('box')
+const bo = urlParams.get('bo')
 console.log(box);
 /* I put your JSON into an external file, loaded from github */
-const url = "/box/" + box + ".json";
+const url = "/box/" + bo + ".json";
 
 const nameBox = document.getElementById("box");
-nameBox.insertAdjacentHTML('beforeend', box)
+nameBox.insertAdjacentHTML('beforeend', bo)
 
 $(document).ready(function () {
     $.ajax({
