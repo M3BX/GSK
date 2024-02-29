@@ -22,20 +22,17 @@ $(document).ready(function () {
 
             var cartItemsList = document.getElementById("contbox");
             let raz = 0
-            let pre = 0
+            let pre = parseInt(results.start.ind)
+            console.log(pre)
+
             let rsum = 0
             let summ = 0
 
             results.box.forEach(function (e) {
                 raz = e.ind - pre
                 pre = e.ind
-                rsum = raz * 7.5
+                rsum = raz * e.id
                 summ += rsum - e.sum
-
-                console.log(rsum)
-                console.log(summ)
-
-
 
                 cartItemsList.insertAdjacentHTML('beforeend', "<tr><td>" + e.date + "</ ><td>" + e.ind + "</td><td>" + raz + "</td><td>" + e.sum + "</td></tr > ");
             });
