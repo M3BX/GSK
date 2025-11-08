@@ -6,8 +6,8 @@ document.getElementById('telegramForm').addEventListener('submit', function(e) {
   const message = document.getElementById('message').value;
 
   // ВАШИ ДАННЫЕ (замените на реальные!)
-  const botToken = 'ВАШ_ТОКЕН_БОТА'; // Например: 123456789:AABBCCDDEEFFGGHHIIJJKKLLMMNNOO
-  const chatId = 'ВАШ_ID_ЧАТА';       // Например: -1001234567890
+  const botToken = '8548673788:AAE2JVyOLMj9Cdr4_OC8BMyjJsQcBjV50cM'; // Например: 123456789:AABBCCDDEEFFGGHHIIJJKKLLMMNNOO
+  const chatId = '1621067774';       // Например: -1001234567890
 
   const text = encodeURIComponent(
     `📧 Новое сообщение с сайта\n\n` +
@@ -17,6 +17,7 @@ document.getElementById('telegramForm').addEventListener('submit', function(e) {
   );
 
   const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${text}`;
+
 
   fetch(url)
     .then(response => response.json())
