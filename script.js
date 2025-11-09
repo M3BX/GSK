@@ -132,7 +132,7 @@ async function getTariffForBox(boxNumber) {
 }
 
 // Расчёт расхода и суммы к оплате (исправленная версия)
-async function calculateUsageAndPayment(boxNumber, currentReading) {
+async function calculateUsageAndPayment(boxNumber, currentReading = null) {
   const readings = await loadReadings();
   const payments = await loadPayments();
 
@@ -149,12 +149,13 @@ async function calculateUsageAndPayment(boxNumber, currentReading) {
   // Берём последнее сохранённое показание
   const lastSavedReading = Number(sortedReadings[sortedReadings.length - 1].reading);
 
-  // Текущее показание (передаётся в функцию)
-  const currentReadingNum = Number(currentReading);
+  // Если currentReading не передан, используем последнее сохранённое показание
+  const currentReadingNum = currentReading !== null 
+    ? Number(currentReading) 
+    : lastSavedReading;
 
   // Расчёт текущего расхода: разница между текущим показанием и последним сохранённым
   const currentUsage = currentReadingNum - lastSavedReading;
-  console.log('Current usage:', currentUsage);
 
   // Если расход отрицательный — вероятно, ошибка ввода
   if (currentUsage < 0) {
@@ -170,12 +171,10 @@ async function calculateUsageAndPayment(boxNumber, currentReading) {
   // Сумма к оплате за текущий период
   const totalDue = currentUsage * tf;
 
-
   // Суммируем все оплаченные суммы для этого бокса
   const paidTotal = payments
     .filter(item => item.box_number === boxNumber)
     .reduce((sum, item) => sum + item.paid, 0);
-
 
   // Остаток к оплате: сумма за текущий период минус оплаченное
   const remaining = totalDue - paidTotal;
@@ -188,6 +187,7 @@ async function calculateUsageAndPayment(boxNumber, currentReading) {
     tf           // тариф
   };
 }
+
 
 
 
@@ -334,6 +334,27 @@ document.getElementById('boxFormCombined').addEventListener('submit', async func
 
       displayReadings(filteredReadings);
       displayPayments(filteredPayments);
+
+     
+      // if (true) {
+      // const calculationn = await calculateUsageAndPayment(boxNumber);
+
+      // const calcTextt = `
+      //   <strong>Бокс ${boxNumber}. Расчёт:</strong><br>
+      //   - Тариф: ${calculationn.tf} ₽/кВт·ч<br>
+      //   - К оплате: ${calculationn.remaining.toFixed(2)} ₽
+      // `;
+
+      // document.getElementById('telegramResult').innerHTML = `
+        
+        
+      //   <div>${calcTextt}</div>
+        
+      // `;
+      // }
+
+
+
     }
   } catch (error) {
     console.error('Ошибка обработки формы:', error);
