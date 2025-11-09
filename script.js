@@ -2,6 +2,9 @@
 const botToken = '8548673788:AAE2JVyOLMj9Cdr4_OC8BMyjJsQcBjV50cM';
 const chatId = '1621067774';
 
+// Регулярное выражение для проверки формата номера бокса
+const boxNumberPattern = /^(\d+|\d+-\d+)$/;
+
 // Загрузка показаний из data.json
 async function loadReadings() {
   try {
@@ -132,12 +135,15 @@ async function getTariffForBox(boxNumber) {
 }
 
 // Расчёт расхода и суммы к оплате (исправленная версия)
-async function calculateUsageAndPayment(boxNumber, currentReading = null) {
+async function calculateUsageAndPayment(boxNumber, currentReading) {
   const readings = await loadReadings();
+  console.log('Readings:', readings);
   const payments = await loadPayments();
+  console.log('Payments:', payments);
 
   // Фильтруем показания для данного бокса
   const relevantReadings = readings.filter(item => item.box_number === boxNumber);
+  console.log('Relevant Readings:', relevantReadings);
 
   if (relevantReadings.length === 0) {
     throw new Error('Нет показаний для расчёта.');
@@ -145,21 +151,25 @@ async function calculateUsageAndPayment(boxNumber, currentReading = null) {
 
   // Сортируем по дате (от старых к новым)
   const sortedReadings = [...relevantReadings].sort((a, b) => new Date(a.date) - new Date(b.date));
+  console.log('Sorted Readings:', sortedReadings);
 
   // Берём последнее сохранённое показание
   const lastSavedReading = Number(sortedReadings[sortedReadings.length - 1].reading);
+  console.log('Last Saved Reading:', lastSavedReading);
 
   // Если currentReading не передан, используем последнее сохранённое показание
-  const currentReadingNum = currentReading !== null 
+  const currentReadingNum = currentReading !== undefined 
     ? Number(currentReading) 
     : lastSavedReading;
+  console.log('Current Reading:', currentReadingNum);
 
   // Расчёт текущего расхода: разница между текущим показанием и последним сохранённым
   const currentUsage = currentReadingNum - lastSavedReading;
+  console.log('Current Usage:', currentUsage);
 
-  // Если расход отрицательный — вероятно, ошибка ввода
   if (currentUsage < 0) {
-    throw new Error('Текущие показания меньше последних сохранённых. Проверьте ввод.');
+    throw new Error(`Текущие показания меньше последних сохранённых. Проверьте ввод.`);
+
   }
 
   // Получаем тариф (берём из последних показаний)
@@ -167,17 +177,47 @@ async function calculateUsageAndPayment(boxNumber, currentReading = null) {
   if (tf === null) {
     throw new Error('Тариф не найден.');
   }
+  console.log('Tariff:', tf);
 
   // Сумма к оплате за текущий период
   const totalDue = currentUsage * tf;
+  console.log('Total Due:', totalDue);
 
   // Суммируем все оплаченные суммы для этого бокса
   const paidTotal = payments
     .filter(item => item.box_number === boxNumber)
     .reduce((sum, item) => sum + item.paid, 0);
+  console.log('Paid Total:', paidTotal);
 
   // Остаток к оплате: сумма за текущий период минус оплаченное
-  const remaining = totalDue - paidTotal;
+
+
+  // 2. Считаем суммарный результат по всем парам
+  let totalResult = 0;
+
+  for (let i = 0; i < sortedReadings.length - 1; i++) {
+    const current = sortedReadings[i];
+    const next = sortedReadings[i + 1];
+
+    // Проверяем наличие необходимых полей
+    if (current.reading == null || next.reading == null || next.tf == null) {
+      console.warn(`Пропущена пара из-за отсутствующих данных`, current, next);
+      continue;
+    }
+
+    const deltaReading = next.reading - current.reading;
+    const tariff = next.tf;
+    const pairResult = deltaReading * tariff;
+
+    totalResult += pairResult;
+  }
+
+  // 3. Выводим итоговую сумму
+  console.log(totalResult); // В вашем примере: 980
+
+  const remaining = totalResult + totalDue - paidTotal;
+  console.log('Remaining:', remaining);
+
 
   return {
     currentUsage,  // текущий расход (между последним и текущим показанием)
@@ -237,10 +277,7 @@ async function sendToTelegram(boxNumber, reading, comment) {
       `;
 
       document.getElementById('telegramResult').innerHTML = `
-        
-        
         <div>${calcText}</div>
-        
       `;
     } else {
       throw new Error(result.description || 'Неизвестная ошибка');
@@ -308,65 +345,73 @@ document.getElementById('boxFormCombined').addEventListener('submit', async func
     }
   }
 
-  if (!isValid) {
-    document.getElementById('telegramResult').innerHTML = `
-      <p style="color: red;">${errorMessage}</p>
-    `;
-    return;
-  }
 
-  try {
-    if (action === 'send') {
-      await sendToTelegram(boxNumber, reading, comment);
-    } else if (action === 'show') {
-      const readings = await loadReadings();
-      const payments = await loadPayments();
-
-      if (!Array.isArray(readings) || !Array.isArray(payments)) {
+    if (!isValid) {
         document.getElementById('telegramResult').innerHTML = `
-          <p style="color: red;">Ошибка загрузки данных. Проверьте файлы data.json и payments.json.</p>
+          <p style="color: red;">${errorMessage}</p>
         `;
         return;
-      }
-
-      const filteredReadings = readings.filter(item => item.box_number === boxNumber);
-      const filteredPayments = payments.filter(item => item.box_number === boxNumber);
-
-      displayReadings(filteredReadings);
-      displayPayments(filteredPayments);
-
-     
-      // if (true) {
-      // const calculationn = await calculateUsageAndPayment(boxNumber);
-
-      // const calcTextt = `
-      //   <strong>Бокс ${boxNumber}. Расчёт:</strong><br>
-      //   - Тариф: ${calculationn.tf} ₽/кВт·ч<br>
-      //   - К оплате: ${calculationn.remaining.toFixed(2)} ₽
-      // `;
-
-      // document.getElementById('telegramResult').innerHTML = `
-        
-        
-      //   <div>${calcTextt}</div>
-        
-      // `;
-      // }
-
-
-
     }
-  } catch (error) {
-    console.error('Ошибка обработки формы:', error);
-    document.getElementById('telegramResult').innerHTML = `
-      <p style="color: red;">Произошла ошибка: ${error.message}</p>
-    `;
-  }
+
+    try {
+        if (action === 'send') {
+            await sendToTelegram(boxNumber, reading, comment);
+        } else if (action === 'show') {
+            const readings = await loadReadings();
+            const payments = await loadPayments();
+
+            if (!Array.isArray(readings) || !Array.isArray(payments)) {
+                document.getElementById('telegramResult').innerHTML = `
+                  <p style="color: red;">Ошибка загрузки данных. Проверьте файлы data.json и payments.json.</p>
+                `;
+                return;
+            }
+
+            const filteredReadings = readings.filter(item => item.box_number === boxNumber);
+            const filteredPayments = payments.filter(item => item.box_number === boxNumber);
+
+            displayReadings(filteredReadings);
+            displayPayments(filteredPayments);
+        }
+    } catch (error) {
+        console.error('Ошибка обработки формы:', error);
+        document.getElementById('telegramResult').innerHTML = `
+          <p style="color: red;">Произошла ошибка: ${error.message}</p>
+        `;
+    }
 });
 
 // Инициализация: очищаем результаты при загрузке страницы
 window.addEventListener('load', () => {
-  document.getElementById('telegramResult').innerHTML = '';
-  document.getElementById('readings-results').innerHTML = '';
-  document.getElementById('payments-results').innerHTML = '';
+    document.getElementById('telegramResult').innerHTML = '';
+    document.getElementById('readings-results').innerHTML = '';
+    document.getElementById('payments-results').innerHTML = '';
 });
+
+// Дополнительная функция для сохранения данных
+// async function saveReading(boxNumber, reading, tf, comment) {
+//     try {
+//         const currentReadings = await loadReadings();
+//         const newReading = {
+//             box_number: boxNumber,
+//             reading: reading,
+//             tf: tf,
+//             date: new Date().toISOString(),
+//             comment: comment
+//         };
+        
+//         const updatedReadings = [...currentReadings, newReading];
+        
+//         // Здесь должен быть код для сохранения в data.json
+//         // Например:
+//         // await fetch('data.json', {
+//         //     method: 'PUT',
+//         //     headers: {
+//         //         'Content-Type': 'application/json'
+//         //     },
+//         //     body: JSON.stringify(updatedReadings)
+//         // });
+//     } catch (error) {
+//         console.error('Ошибка сохранения показаний:', error);
+//     }
+// }

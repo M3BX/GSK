@@ -8,10 +8,18 @@
 </head>
 <body>
   <div class="container">
-    <h2>Работа с данными бокса</h2>
+    <h2>Буран</h2>
     <form id="boxFormCombined">
+
       <label for="boxNumber">Номер бокса:</label>
-      <input type="number" id="boxNumber" name="boxNumber" min="1">
+      <input 
+        type="text" 
+        id="boxNumber" 
+        name="boxNumber" 
+        pattern="\d+(?:-\d+)?" 
+        title="Введите номер бокса в формате '1' или '1-2'"
+        required
+      >
 
       <label for="reading">Показания (целое число):</label>
       <input type="number" id="reading" name="reading" min="0" step="1">
