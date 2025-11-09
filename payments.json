@@ -1,13 +1,13 @@
 [
   {
     "box_number": 1,
-    "paid": 1500,
+    "paid": 980,
     "payment_date": "2025-11-05T14:20:00Z",
     "comment": "Оплата за ноябрь"
   },
   {
     "box_number": 1,
-    "paid": 1500,
+    "paid": 100,
     "payment_date": "2025-10-05T10:10:00Z",
     "comment": "Оплата за октябрь"
   },

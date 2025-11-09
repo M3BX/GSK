@@ -149,13 +149,12 @@ async function calculateUsageAndPayment(boxNumber, currentReading) {
   // Берём последнее сохранённое показание
   const lastSavedReading = Number(sortedReadings[sortedReadings.length - 1].reading);
 
-
   // Текущее показание (передаётся в функцию)
   const currentReadingNum = Number(currentReading);
 
   // Расчёт текущего расхода: разница между текущим показанием и последним сохранённым
   const currentUsage = currentReadingNum - lastSavedReading;
-
+  console.log('Current usage:', currentUsage);
 
   // Если расход отрицательный — вероятно, ошибка ввода
   if (currentUsage < 0) {
@@ -180,7 +179,6 @@ async function calculateUsageAndPayment(boxNumber, currentReading) {
 
   // Остаток к оплате: сумма за текущий период минус оплаченное
   const remaining = totalDue - paidTotal;
-
 
   return {
     currentUsage,  // текущий расход (между последним и текущим показанием)
@@ -220,7 +218,7 @@ async function sendToTelegram(boxNumber, reading, comment) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: `\`\`\`json\n${jsonString}\n\`\`\``
+        text: `${jsonString}\n`
       })
     });
 
@@ -228,20 +226,21 @@ async function sendToTelegram(boxNumber, reading, comment) {
     if (result.ok) {
       const calculation = await calculateUsageAndPayment(boxNumber, reading);
 
+      console.log('Calculation result:', calculation);
+
       const calcText = `
-        <strong>Расчёт:</strong><br>
-        - Расход: ${calculation.usage} кВт·ч<br>
+        <strong>Бокс ${boxNumber}. Расчёт:</strong><br>
+        - Расход: ${calculation.currentUsage} кВт·ч<br>
         - Тариф: ${calculation.tf} ₽/кВт·ч<br>
-        - Сумма к оплате: ${calculation.totalDue.toFixed(2)} ₽<br>
-        - Уже оплачено: ${calculation.paidTotal.toFixed(2)} ₽<br>
-        - Остаток к оплате: ${calculation.remaining.toFixed(2)} ₽
+        - Начисленно: ${calculation.totalDue.toFixed(2)} ₽<br>
+        - К оплате: ${calculation.remaining.toFixed(2)} ₽
       `;
 
       document.getElementById('telegramResult').innerHTML = `
-        <p>Сообщение отправлено в Telegram!</p>
-        <pre>${jsonString}</pre>
+        
+        
         <div>${calcText}</div>
-        <p>Скопируйте JSON и добавьте его вручную в <code>data.json</code>.</p>
+        
       `;
     } else {
       throw new Error(result.description || 'Неизвестная ошибка');
